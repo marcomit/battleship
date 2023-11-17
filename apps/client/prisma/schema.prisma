@@ -1,26 +1,26 @@
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider          = "postgres"
+  url               = env("DATABASE_URL")
   shadowDatabaseUrl = env("SHADOW_DATABASE_URL") // Only needed when using a cloud provider that doesn't support the creation of new databases, like Heroku. Learn more: https://pris.ly/d/migrate-shadow
 }
 
 generator client {
-  provider        = "prisma-client-js"
+  provider = "prisma-client-js"
 }
 
 model Account {
-  id                 String  @id @default(cuid())
-  userId             String
-  type               String
-  provider           String
-  providerAccountId  String
-  refresh_token      String?  @db.Text
-  access_token       String?  @db.Text
-  expires_at         Int?
-  token_type         String?
-  scope              String?
-  id_token           String?  @db.Text
-  session_state      String?
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
 
   user User @relation(fields: [userId], references: [id], onDelete: Cascade)
 
@@ -36,15 +36,27 @@ model Session {
 }
 
 model User {
-  id            String    @id @default(cuid())
-  name          String?
-  email         String?   @unique
-  emailVerified DateTime?
-  image         String?
-  accounts      Account[]
-  sessions      Session[]
-  gamesWin      Game[]    @relation("winner")
-  gamesLose     Game[]    @relation("loser")
+  id              String          @id @default(cuid())
+  name            String?
+  email           String?         @unique
+  emailVerified   DateTime?
+  image           String?
+  username        String          @unique @default(uuid())
+  accounts        Account[]
+  sessions        Session[]
+  gamesWin        Game[]          @relation("winner")
+  gamesLose       Game[]          @relation("loser")
+  requestSent     FriendRequest[] @relation("sender")
+  requestReceived FriendRequest[] @relation("receiver")
+}
+
+model FriendRequest {
+  sender     User   @relation("sender", fields: [senderId], references: [id])
+  senderId   String
+  receiver   User   @relation("receiver", fields: [receiverId], references: [id])
+  receiverId String
+
+  @@unique([senderId, receiverId])
 }
 
 model VerificationToken {
@@ -55,7 +67,7 @@ model VerificationToken {
   @@unique([identifier, token])
 }
 
-model Game{
+model Game {
   id     String @id @default(uuid())
   winner User   @relation("winner", fields: [id], references: [id])
   loser  User   @relation("loser", fields: [id], references: [id], map: "winner")

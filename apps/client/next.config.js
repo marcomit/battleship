@@ -1,10 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  experimental:{
-    ppr: true,
-    serverMinification: true,
-    serverActions: true
-  }
-}
+  images: {
+    domains: ["lh3.googleusercontent.com"],
+  },
+};
 
 module.exports = nextConfig;

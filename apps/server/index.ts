@@ -23,7 +23,7 @@ io.on("connection", (socket) => {
   socket.on("client-ready", () => {
     socket.broadcast.emit("get-canvas-state");
   });
-
+  socket.on("new_game", () => {});
   socket.on("get-message", (message) => {
     console.log(message);
     socket.broadcast.emit("message", message);
