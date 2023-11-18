@@ -6,6 +6,10 @@ import { ModeProvider } from "@/providers/mode";
 import { cn } from "@/lib/utils";
 import ThemeWrapper from "@/components/theme/wrapper";
 import { Toaster } from "@/components/ui/toaster";
+import EncryptionProvider from "@/providers/encryption";
+import { Provider } from "jotai";
+import JotaiProvider from "@/providers/jotai";
+import { TooltipProvider } from "@/components/ui/tooltip";
 
 export const metadata: Metadata = {
   title: "Create Next App",
@@ -20,14 +24,18 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <body className={cn(GeistSans.className, "theme-zinc")}>
-        <ModeProvider attribute="class" defaultTheme="system" enableSystem>
-          <ThemeWrapper defaultTheme="zinc">
-            <SessionProvider>
-              {children}
-              <Toaster />
-            </SessionProvider>
-          </ThemeWrapper>
-        </ModeProvider>
+        <JotaiProvider>
+          <TooltipProvider>
+            <ModeProvider attribute="class" defaultTheme="system" enableSystem>
+              <ThemeWrapper defaultTheme="zinc">
+                <SessionProvider>
+                  {children}
+                  <Toaster />
+                </SessionProvider>
+              </ThemeWrapper>
+            </ModeProvider>
+          </TooltipProvider>
+        </JotaiProvider>
       </body>
     </html>
   );

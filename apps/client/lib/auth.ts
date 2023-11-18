@@ -4,6 +4,7 @@ import GoogleProvider from "next-auth/providers/google";
 import { nanoid } from "nanoid";
 import { env } from "@/env.mjs";
 import { db } from "./prisma";
+import { generateAsyncKey } from "./encryption";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -13,7 +14,6 @@ export const authOptions: NextAuthOptions = {
       clientSecret: env.GOOGLE_SECRET,
     }),
   ],
-  secret: env.NEXTAUTH_SECRET,
   session: { strategy: "jwt" },
   pages: {
     signIn: "/login",
@@ -60,7 +60,7 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    redirect({ url, baseUrl }) {
+    redirect() {
       return "/dashboard";
     },
   },

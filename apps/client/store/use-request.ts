@@ -1,9 +1,9 @@
-import { FriendRequest } from "@prisma/client";
+import { FriendRequest, User } from "@prisma/client";
 import { create } from "zustand";
 
 type UseRequest = {
-  requestReceived: FriendRequest[];
-  requestSent: FriendRequest[];
+  requestReceived: (FriendRequest & { sender?: User; receiver?: User })[];
+  requestSent: (FriendRequest & { sender?: User; receiver?: User })[];
   addReceivedRequest: (request: FriendRequest) => void;
   addSentRequest: (request: FriendRequest) => void;
   removeRequest: (id: string) => void;

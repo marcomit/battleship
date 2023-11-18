@@ -4,7 +4,7 @@ export function generateAsyncKey(): Promise<Keys> {
   return new Promise((resolve, reject) => {
     forge.pki.rsa.generateKeyPair(
       { bits: 2048, workers: -1 },
-      (err, keypair) => {
+      (err: any, keypair: any) => {
         if (err) {
           console.error("Errore nella generazione delle chiavi:", err);
           reject(err);

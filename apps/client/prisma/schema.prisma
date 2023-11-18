@@ -41,7 +41,8 @@ model User {
   email           String?         @unique
   emailVerified   DateTime?
   image           String?
-  username        String          @unique @default(uuid())
+  username        String?         @unique
+  publicKey       String?
   accounts        Account[]
   sessions        Session[]
   gamesWin        Game[]          @relation("winner")
@@ -51,10 +52,12 @@ model User {
 }
 
 model FriendRequest {
-  sender     User   @relation("sender", fields: [senderId], references: [id])
+  sender     User          @relation("sender", fields: [senderId], references: [id])
   senderId   String
-  receiver   User   @relation("receiver", fields: [receiverId], references: [id])
+  receiver   User          @relation("receiver", fields: [receiverId], references: [id])
   receiverId String
+  sentAt     DateTime      @default(now())
+  status     RequestStatus @default(IN_PROGRESS)
 
   @@unique([senderId, receiverId])
 }
@@ -71,4 +74,10 @@ model Game {
   id     String @id @default(uuid())
   winner User   @relation("winner", fields: [id], references: [id])
   loser  User   @relation("loser", fields: [id], references: [id], map: "winner")
+}
+
+enum RequestStatus {
+  IN_PROGRESS
+  REFUSED
+  ACCEPTED
 }
