@@ -10,6 +10,7 @@ import { Badge } from "./ui/badge";
 import { buttonVariants } from "./ui/button";
 import { ThemeCustomizer } from "./theme/customizer";
 import { useEffect } from "react";
+import UserAvatar from "./user-avatar";
 
 export default function NavBar() {
   const { data: session } = useSession();
@@ -18,11 +19,9 @@ export default function NavBar() {
   useEffect(() => {}, [currentNavBar]);
   return (
     <aside className="sticky top-0 h-screen w-56 bg-accent p-4">
-      <div className="flex items-center mb-4 space-x-1 justify-between">
-        <Avatar>
-          <AvatarImage src={session?.user.image!} />
-          <AvatarFallback>XX</AvatarFallback>
-        </Avatar>
+      <div className="flex items-center mb-4 space-x-2 justify-between">
+        <UserAvatar user={session?.user!} />
+        <p className="whitespace-pre">{session?.user.username}</p>
         <ThemeCustomizer />
       </div>
       <Separator />

@@ -1,3 +1,6 @@
+-- CreateEnum
+CREATE TYPE "RequestStatus" AS ENUM ('IN_PROGRESS', 'REFUSED', 'ACCEPTED');
+
 -- CreateTable
 CREATE TABLE "Account" (
     "id" TEXT NOT NULL,
@@ -42,7 +45,9 @@ CREATE TABLE "User" (
 -- CreateTable
 CREATE TABLE "FriendRequest" (
     "senderId" TEXT NOT NULL,
-    "receiverId" TEXT NOT NULL
+    "receiverId" TEXT NOT NULL,
+    "sentAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "status" "RequestStatus" NOT NULL DEFAULT 'IN_PROGRESS'
 );
 
 -- CreateTable
@@ -55,6 +60,9 @@ CREATE TABLE "VerificationToken" (
 -- CreateTable
 CREATE TABLE "Game" (
     "id" TEXT NOT NULL,
+    "winnerId" TEXT NOT NULL,
+    "loserId" TEXT NOT NULL,
+    "playedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Game_pkey" PRIMARY KEY ("id")
 );
@@ -93,7 +101,7 @@ ALTER TABLE "FriendRequest" ADD CONSTRAINT "FriendRequest_senderId_fkey" FOREIGN
 ALTER TABLE "FriendRequest" ADD CONSTRAINT "FriendRequest_receiverId_fkey" FOREIGN KEY ("receiverId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Game" ADD CONSTRAINT "Game_id_fkey" FOREIGN KEY ("id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Game" ADD CONSTRAINT "Game_winnerId_fkey" FOREIGN KEY ("winnerId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "Game" ADD CONSTRAINT "winner" FOREIGN KEY ("id") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "Game" ADD CONSTRAINT "Game_loserId_fkey" FOREIGN KEY ("loserId") REFERENCES "User"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

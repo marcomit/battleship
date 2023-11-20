@@ -1,20 +1,19 @@
+"use client";
+
 import { User } from "@prisma/client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
+import { getInitialLetter } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
-export default function UserAvatar({ user }: { user: Partial<User> }) {
+export default function UserAvatar({ user }: { user?: Partial<User> }) {
+  const [mounted, setMounted] = useState<boolean>(false);
+  useEffect(() => setMounted(true), []);
   return (
     <Avatar>
-      <AvatarImage src={user.image!} />
-      <AvatarFallback>{getInitialLetter(user.name!)}</AvatarFallback>
+      <AvatarImage src={user?.image!} />
+      <AvatarFallback>
+        {mounted && user ? getInitialLetter(user?.name!) : "XX"}
+      </AvatarFallback>
     </Avatar>
   );
-}
-function getInitialLetter(name: string): string {
-  var initialLetter = "";
-  name
-    .split(" ")
-    .forEach((word, index) =>
-      index < 2 ? (initialLetter += word[0].toUpperCase()) : null
-    );
-  return initialLetter;
 }

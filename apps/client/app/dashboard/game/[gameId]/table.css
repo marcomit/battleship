@@ -1,0 +1,9 @@
+table td {
+  @apply bg-accent w-8 h-8 border border-background;
+}
+.water {
+  @apply bg-blue-500;
+}
+.ship {
+  @apply bg-red-500;
+}

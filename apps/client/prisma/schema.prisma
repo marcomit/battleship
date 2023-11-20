@@ -71,9 +71,15 @@ model VerificationToken {
 }
 
 model Game {
-  id     String @id @default(uuid())
-  winner User   @relation("winner", fields: [id], references: [id])
-  loser  User   @relation("loser", fields: [id], references: [id], map: "winner")
+  id            String   @id @default(uuid())
+  winner        User     @relation("winner", fields: [winnerId], references: [id])
+  winnerId      String
+  movesOfWinner String[]
+  loser         User     @relation("loser", fields: [loserId], references: [id])
+  loserId       String
+  movesOfLoser  String[]
+  gameId        String
+  playedAt      DateTime @default(now())
 }
 
 enum RequestStatus {

@@ -1,8 +1,7 @@
-const express = require("express");
 const http = require("http");
-const app = express();
-const server = http.createServer(app);
+const server = http.createServer(require("express")());
 
+import { User } from "@prisma/client";
 import { Server } from "socket.io";
 
 const io = new Server(server, {
@@ -11,23 +10,38 @@ const io = new Server(server, {
   },
 });
 
-type Point = { x: number; y: number };
-
-type DrawLine = {
-  prevPoint: Point | null;
-  currentPoint: Point;
-  color: string;
-};
-
 io.on("connection", (socket) => {
-  socket.on("client-ready", () => {
-    socket.broadcast.emit("get-canvas-state");
+  io.on("join", (room: string) => {
+    console.log(room);
   });
-  socket.on("new_game", () => {});
-  socket.on("get-message", (message) => {
-    console.log(message);
-    socket.broadcast.emit("message", message);
+
+  socket.on("join", (room: string) => {
+    socket.join(room);
   });
+
+  socket.on("search-game", (msg: { user: User; otherGameId: string }) => {
+    socket.broadcast.emit("send-game-id", msg);
+  });
+
+  socket.on("send-enemy-info", ({ user }: { user: User }) => {
+    socket.broadcast.emit("receive-game-info", { user });
+  });
+
+  socket.on("shot", (coords: { x: number; y: number }, roomId: string) => {
+    console.log(roomId);
+    socket.to(roomId).emit("shotted", coords);
+  });
+  socket.on(
+    "send-shot-result",
+    (
+      coords: { x: number; y: number; result: "water" | "ship" },
+      roomId: string
+    ) => socket.to(roomId).emit("receive-shot-result", coords)
+  );
+  socket.on("ongame-user-disconnect", (roomId: string) => {
+    socket.to(roomId).emit("ongame-user-disconnect");
+  });
+  socket.on("leave", (roomId: string) => socket.leave(roomId));
 });
 
 server.listen(2999, () => {

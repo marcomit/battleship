@@ -5,13 +5,16 @@ import {
   PageHeaderDescription,
   PageHeaderHeading,
 } from "@/components/page.header";
+import { generateAsyncKey } from "@/lib/encryption";
 import { useKeys } from "@/store/use-keys";
 import { useEffect, useState } from "react";
 
 export default function Page() {
-  const [keys] = useKeys();
+  const [keys, setKeys] = useKeys();
   const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
+  useEffect(() => {
+    setMounted(true);
+  }, []);
   return (
     <main>
       <PageHeader>
