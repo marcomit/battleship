@@ -37,7 +37,8 @@ CREATE TABLE "User" (
     "emailVerified" TIMESTAMP(3),
     "image" TEXT,
     "username" TEXT,
-    "publicKey" TEXT,
+    "publicKey" TEXT NOT NULL,
+    "privateKey" TEXT NOT NULL,
 
     CONSTRAINT "User_pkey" PRIMARY KEY ("id")
 );
@@ -61,7 +62,10 @@ CREATE TABLE "VerificationToken" (
 CREATE TABLE "Game" (
     "id" TEXT NOT NULL,
     "winnerId" TEXT NOT NULL,
+    "movesOfWinner" TEXT[],
     "loserId" TEXT NOT NULL,
+    "movesOfLoser" TEXT[],
+    "gameId" TEXT NOT NULL,
     "playedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
 
     CONSTRAINT "Game_pkey" PRIMARY KEY ("id")

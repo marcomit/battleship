@@ -2,7 +2,7 @@
 
 import { Theme } from "@/config/themes";
 import { useConfig } from "@/store/use-config";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 
 export default function ThemeWrapper({
   children,
@@ -10,7 +10,8 @@ export default function ThemeWrapper({
   ...props
 }: React.ComponentProps<"div"> & { defaultTheme: Theme["name"] }) {
   const [config] = useConfig();
-
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
   useEffect(() => {
     document.body.classList.forEach((className) => {
       if (className.startsWith("theme")) {
@@ -21,16 +22,18 @@ export default function ThemeWrapper({
   }, [config]);
 
   return (
-    <div
-      className={"w-full"}
-      style={
-        {
-          "--radius": `${config.radius}rem`,
-        } as React.CSSProperties
-      }
-      {...props}
-    >
-      {children}
-    </div>
+    mounted && (
+      <div
+        className={"w-full"}
+        style={
+          {
+            "--radius": `${config.radius}rem`,
+          } as React.CSSProperties
+        }
+        {...props}
+      >
+        {children}
+      </div>
+    )
   );
 }

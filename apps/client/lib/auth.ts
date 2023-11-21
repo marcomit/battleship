@@ -30,16 +30,13 @@ export const authOptions: NextAuthOptions = {
         token.id = user!.id;
         return token;
       }
-
-      if (!dbUserResult.username) {
+      if (!dbUserResult.publicKey) {
+        const keys = await generateAsyncKey();
         await db.user.update({
-          where: {
-            id: dbUserResult.id,
-          },
-          data: {
-            username: `Guest-${nanoid(4)}`,
-          },
+          where: { id: dbUserResult.id },
+          data: { publicKey: keys.publicKey },
         });
+        dbUserResult.publicKey = keys.publicKey;
       }
 
       return {
@@ -48,6 +45,7 @@ export const authOptions: NextAuthOptions = {
         email: dbUserResult.email,
         picture: dbUserResult.image,
         username: dbUserResult.username,
+        publicKey: dbUserResult.publicKey,
       };
     },
     async session({ session, token }) {
@@ -57,6 +55,7 @@ export const authOptions: NextAuthOptions = {
         session.user.email = token.email;
         session.user.image = token.picture;
         session.user.username = token.username;
+        session.user.publicKey = token.publicKey;
       }
       return session;
     },

@@ -5,13 +5,12 @@ import {
   PageHeaderDescription,
   PageHeaderHeading,
 } from "@/components/page.header";
-import { generateAsyncKey } from "@/lib/encryption";
-import { useKeys } from "@/store/use-keys";
+import { useSession } from "next-auth/react";
 import { useEffect, useState } from "react";
 
 export default function Page() {
-  const [keys, setKeys] = useKeys();
   const [mounted, setMounted] = useState(false);
+  const { data: session } = useSession();
   useEffect(() => {
     setMounted(true);
   }, []);
@@ -23,7 +22,7 @@ export default function Page() {
           You can find your ELO and recent games
         </PageHeaderDescription>
       </PageHeader>
-      {mounted && JSON.stringify(keys)}
+      {mounted && JSON.stringify(session?.user)}
     </main>
   );
 }

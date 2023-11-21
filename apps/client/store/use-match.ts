@@ -24,6 +24,7 @@ interface UseMatch {
     y: number;
     result: "ship" | "water";
   }) => void;
+  resetMatch: () => void;
 }
 
 export const useMatch = create<UseMatch>()(
@@ -57,6 +58,9 @@ export const useMatch = create<UseMatch>()(
       enemyMoves: [],
       addEnemyMoves(newMove) {
         set((state) => ({ enemyMoves: [...state.enemyMoves, newMove] }));
+      },
+      resetMatch() {
+        set({ myMoves: [], enemyMoves: [] });
       },
     }),
     { name: "matchStore" }

@@ -30,15 +30,15 @@ export default function LogOut() {
     <AlertDialog>
       <AlertDialogTrigger asChild>
         <Button
-          variant={"ghost"}
-          className="border w-full flex items-center justify-start py-2 px-4"
+          variant={"destructive"}
+          className="border w-full flex items-center justify-center md:justify-start py-2 px-4"
         >
           {isLoading ? (
             <Icons.spinner className="w-4 h-4 animate-spin mr-4" />
           ) : (
             <LogOutIcon className="w-4 h-4 mr-2" />
           )}
-          Logout
+          <p className="max-md:hidden">Logout</p>
         </Button>
       </AlertDialogTrigger>
       <AlertDialogContent>

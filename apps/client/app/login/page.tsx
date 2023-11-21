@@ -14,9 +14,12 @@ import { Label } from "@/components/ui/label";
 import { BuiltInProviderType } from "next-auth/providers/index";
 import { LiteralUnion, signIn } from "next-auth/react";
 import { Icons } from "@/components/icons";
+import { useNavBar } from "@/store/use-navbar";
 
 export default function Page() {
+  const { setCurrentNavBar } = useNavBar();
   async function handleClick(provider: LiteralUnion<BuiltInProviderType>) {
+    setCurrentNavBar(0);
     await signIn(provider, { redirect: false }).catch((err) =>
       console.log(err)
     );

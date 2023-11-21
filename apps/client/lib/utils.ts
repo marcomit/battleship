@@ -1,4 +1,7 @@
+import { env } from "@/env.mjs";
 import { type ClassValue, clsx } from "clsx";
+import { Session } from "next-auth";
+import { getCsrfToken } from "next-auth/react";
 import { twMerge } from "tailwind-merge";
 
 export function cn(...inputs: ClassValue[]) {
@@ -20,4 +23,16 @@ export function getInitialLetter(name: string): string {
       index < 2 ? (initialLetter += word[0].toUpperCase()) : null
     );
   return initialLetter;
+}
+export async function updateSession(newSession: Session) {
+  await fetch("/api/auth/session", {
+    method: "POST",
+    headers: {
+      "content-type": "application/json",
+    },
+    body: JSON.stringify({
+      csrfToken: await getCsrfToken(),
+      data: newSession,
+    }),
+  });
 }

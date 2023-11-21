@@ -14,6 +14,7 @@ export default function Page() {
   const router = useRouter();
 
   useEffect(() => {
+    setIsMyTurn(false);
     socket.emit("search-game", { user: session?.user!, otherGameId: matchId });
 
     socket.on(

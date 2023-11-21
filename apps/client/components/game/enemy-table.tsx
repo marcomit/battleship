@@ -7,9 +7,8 @@ import { useMatch } from "@/store/use-match";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Badge } from "../ui/badge";
 import UserAvatar from "../user-avatar";
-import axios from "axios";
 import { useSession } from "next-auth/react";
-import { Game } from "@prisma/client";
+import { Carousel } from "react-responsive-carousel";
 
 export default function EnemyTable({ size }: { size: number }) {
   const { data: session } = useSession();
@@ -19,13 +18,12 @@ export default function EnemyTable({ size }: { size: number }) {
     setIsMyTurn,
     matchId,
     matchInfo,
-    enemy,
     enemyMoves,
     addEnemyMoves,
-    myMoves,
   } = useMatch();
   const [enemyTable] = useState<number[][]>(generateRandomTable(size, false));
   const [seconds, setSeconds] = useState<number>(matchInfo?.totalTime! * 60);
+  const [ship, setShip] = useState<number>(0);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const startTimer = () => {
@@ -34,24 +32,6 @@ export default function EnemyTable({ size }: { size: number }) {
         setSeconds((prevSeconds) => prevSeconds - 1);
         if (seconds < 0) {
           socket.emit("time-out");
-          await axios
-            .post("/api/game", {
-              loserId: enemy?.id,
-              winnerId: session?.user.id!,
-              gameId: matchId,
-              movesOfLoser: enemyMoves.map(
-                (move) => `${move.x}-${move.y}-${move.result}`
-              ),
-              movesOfWinner: myMoves.map(
-                (move) => `${move.x}-${move.y}-${move.result}`
-              ),
-            } as Game)
-            .then((res) => {
-              console.log(res.data);
-              clearInterval(intervalIdRef.current!);
-              intervalIdRef.current = null;
-            })
-            .catch((err) => console.log(err));
         }
       }, 1000);
     }
@@ -67,11 +47,14 @@ export default function EnemyTable({ size }: { size: number }) {
     (x: number, y: number) => {
       return () => {
         const td = table.current?.querySelectorAll("tr td")[y * size + x];
-        if (isMyTurn && !td?.className) {
+        if (
+          isMyTurn &&
+          !(td?.classList.contains("ship") || td?.classList.contains("water"))
+        ) {
           if (enemyTable[y][x] === 1) {
-            td!.className = "ship";
+            td!.classList.add("ship");
           } else {
-            td!.className = "water";
+            td!.classList.add("water");
             socket.emit("shot", { x, y }, matchId);
           }
         }
@@ -93,6 +76,12 @@ export default function EnemyTable({ size }: { size: number }) {
       }) => {
         addEnemyMoves({ x, y, result });
         if (result === "water") setIsMyTurn(false);
+        else
+          setShip((prevShip) => {
+            if (prevShip + 1 === matchInfo?.ship!)
+              socket.emit("match-win", matchId);
+            return prevShip + 1;
+          });
         const td = table.current?.querySelectorAll("tr td")[y * size + x];
         if (td) td.className = result;
       }
@@ -108,66 +97,73 @@ export default function EnemyTable({ size }: { size: number }) {
   }, [isMyTurn]);
 
   return (
-    <div className="flex mt-6">
-      <div className="flex flex-col">
-        <span className="w-8 h-8 border border-background flex items-center justify-center">
-          {" "}
-          <div
-            className={cn(
-              "rounded-full w-3 h-3 bg-green-500 animate-ping duration-1000",
-              !isMyTurn && "hidden"
-            )}
-          ></div>
-        </span>
-        {enemyTable.map((_, index) => (
-          <span
-            key={index}
-            className="w-8 h-8 border border-background text-center"
-          >
-            {index + 1}
+    <div className="lg:flex mt-6">
+      <div className="flex">
+        <div className="flex flex-col">
+          <span className="w-8 h-8 border border-background flex items-center justify-center">
+            {" "}
+            <div
+              className={cn(
+                "rounded-full w-3 h-3 bg-green-500 animate-ping duration-1000",
+                !isMyTurn && "hidden"
+              )}
+            ></div>
           </span>
-        ))}
-      </div>
-      <table ref={table}>
-        <thead>
-          <tr>
-            {alphabet.split("").map(
-              (letter, index) =>
-                index < size && (
-                  <th key={index} className="uppercase">
-                    {letter}
-                  </th>
-                )
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {enemyTable.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                <td
-                  key={cellIndex}
-                  onClick={handleCellClick(cellIndex, rowIndex)}
-                />
-              ))}
-            </tr>
+          {enemyTable.map((_, index) => (
+            <span
+              key={index}
+              className="w-8 h-8 border border-background text-center"
+            >
+              {index + 1}
+            </span>
           ))}
-        </tbody>
-      </table>
+        </div>
+        <table ref={table}>
+          <thead>
+            <tr>
+              {alphabet.split("").map(
+                (letter, index) =>
+                  index < size && (
+                    <th key={index} className="uppercase">
+                      {letter}
+                    </th>
+                  )
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {enemyTable.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((cell, cellIndex) => (
+                  <td
+                    className=""
+                    key={cellIndex}
+                    onClick={handleCellClick(cellIndex, rowIndex)}
+                  />
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="ml-4 space-y-2 max-w-lg">
         <div className="flex items-center space-x-2">
-          <UserAvatar user={session?.user} />
-          <p className="font-bold">You!</p>
+          <UserAvatar user={session?.user!} />
+          <div>
+            <p className="font-bold whitespace-pr">You!</p>
+            <Badge>Ship: {matchInfo?.ship! - ship}</Badge>
+          </div>
         </div>
         <Badge variant={"outline"}>
           {formatNumberWithZero(seconds / 60)} :{" "}
           {formatNumberWithZero(seconds % 60)}
         </Badge>
         <br />
+
         {enemyMoves.map((shot, index) => (
           <Badge
             key={index}
-            className={"uppercase float-left mr-1"}
+            className={"uppercase max-sm:float-left max-md:hidden mr-1"}
             variant={shot.result === "ship" ? "default" : "outline"}
           >
             {alphabet[shot.x]}-{shot.y + 1}

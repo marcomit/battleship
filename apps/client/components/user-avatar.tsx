@@ -2,14 +2,17 @@
 
 import { User } from "@prisma/client";
 import { Avatar, AvatarFallback, AvatarImage } from "./ui/avatar";
-import { getInitialLetter } from "@/lib/utils";
+import { cn, getInitialLetter } from "@/lib/utils";
 import { useEffect, useState } from "react";
+import { ClassArray, ClassValue } from "clsx";
 
-export default function UserAvatar({ user }: { user?: Partial<User> }) {
+type UserAvatarProps = { user: Partial<User>; className?: string };
+
+export default function UserAvatar({ user, className }: UserAvatarProps) {
   const [mounted, setMounted] = useState<boolean>(false);
   useEffect(() => setMounted(true), []);
   return (
-    <Avatar>
+    <Avatar className={cn(className)}>
       <AvatarImage src={user?.image!} />
       <AvatarFallback>
         {mounted && user ? getInitialLetter(user?.name!) : "XX"}

@@ -21,6 +21,7 @@ export default function MyTable({ size }: { size: number }) {
   } = useMatch();
   const [shipTable] = useState<number[][]>(generateRandomTable(size, true));
   const [seconds, setSeconds] = useState<number>(matchInfo?.totalTime! * 60);
+  const [ship, setShip] = useState<number>(0);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
 
   const startTimer = () => {
@@ -51,6 +52,7 @@ export default function MyTable({ size }: { size: number }) {
       }) => {
         addMyMoves({ x, y, result });
         if (shipTable[y][x] === 0) setIsMyTurn(true);
+        else setShip((prevShip) => prevShip + 1);
         const td = table.current?.querySelectorAll("tr td")[y * size + x];
         if (td) td.classList.replace("opacity-50", "opacity-100");
         socket.emit(
@@ -75,56 +77,61 @@ export default function MyTable({ size }: { size: number }) {
   }, [isMyTurn]);
 
   return (
-    <div className="flex">
-      <div className="flex flex-col">
-        <span className="w-8 h-8 border border-background flex items-center justify-center">
-          {" "}
-          <div
-            className={cn(
-              "rounded-full w-3 h-3 bg-green-500 animate-ping duration-1000",
-              isMyTurn && "hidden"
-            )}
-          ></div>
-        </span>
-        {shipTable.map((_, index) => (
-          <span
-            key={index}
-            className="w-8 h-8 border border-background text-center"
-          >
-            {index + 1}
+    <div className="lg:flex">
+      <div className="flex">
+        <div className="flex flex-col">
+          <span className="w-8 h-8 border border-background flex items-center justify-center">
+            {" "}
+            <div
+              className={cn(
+                "rounded-full w-3 h-3 bg-green-500 animate-ping duration-1000",
+                isMyTurn && "hidden"
+              )}
+            ></div>
           </span>
-        ))}
-      </div>
-      <table ref={table}>
-        <thead>
-          <tr>
-            {alphabet.split("").map(
-              (letter, index) =>
-                index < size && (
-                  <th key={index} className="uppercase">
-                    {letter}
-                  </th>
-                )
-            )}
-          </tr>
-        </thead>
-        <tbody>
-          {shipTable.map((row, rowIndex) => (
-            <tr key={rowIndex}>
-              {row.map((cell, cellIndex) => (
-                <td
-                  key={cellIndex}
-                  className={cn(cell === 1 ? "ship" : "water", "opacity-50")}
-                />
-              ))}
-            </tr>
+          {shipTable.map((_, index) => (
+            <span
+              key={index}
+              className="w-8 h-8 border border-background text-center"
+            >
+              {index + 1}
+            </span>
           ))}
-        </tbody>
-      </table>
+        </div>
+        <table ref={table}>
+          <thead>
+            <tr>
+              {alphabet.split("").map(
+                (letter, index) =>
+                  index < size && (
+                    <th key={index} className="uppercase">
+                      {letter}
+                    </th>
+                  )
+              )}
+            </tr>
+          </thead>
+          <tbody>
+            {shipTable.map((row, rowIndex) => (
+              <tr key={rowIndex}>
+                {row.map((cell, cellIndex) => (
+                  <td
+                    key={cellIndex}
+                    className={cn(cell === 1 ? "ship" : "water", "opacity-50")}
+                  />
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       <div className="ml-4 space-y-2 max-w-lg">
         <div className="flex items-center space-x-2">
-          <UserAvatar user={enemy} />
-          <p className="font-bold">{enemy?.username}</p>
+          <UserAvatar user={enemy!} />
+          <div>
+            <p className="font-bold whitespace-pr">{enemy?.email}</p>
+            <Badge>Ship: {matchInfo?.ship! - ship}</Badge>
+          </div>
         </div>
         <Badge variant={"outline"}>
           {formatNumberWithZero(seconds / 60)} :{" "}
@@ -140,6 +147,8 @@ export default function MyTable({ size }: { size: number }) {
             {alphabet[shot.x]}-{shot.y + 1}
           </Badge>
         ))}
+        <br />
+        <br />
       </div>
     </div>
   );

@@ -28,7 +28,6 @@ io.on("connection", (socket) => {
   });
 
   socket.on("shot", (coords: { x: number; y: number }, roomId: string) => {
-    console.log(roomId);
     socket.to(roomId).emit("shotted", coords);
   });
   socket.on(
@@ -39,7 +38,11 @@ io.on("connection", (socket) => {
     ) => socket.to(roomId).emit("receive-shot-result", coords)
   );
   socket.on("ongame-user-disconnect", (roomId: string) => {
-    socket.to(roomId).emit("ongame-user-disconnect");
+    socket.to(roomId).emit("user-disconnect");
+  });
+  socket.on("match-win", (roomId: string) => {
+    socket.to(roomId).emit("match-loose");
+    socket.leave(roomId);
   });
   socket.on("leave", (roomId: string) => socket.leave(roomId));
 });

@@ -16,6 +16,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { useMatch } from "@/store/use-match";
+import { useToast } from "@/components/ui/use-toast";
 
 const SIZE = 10;
 
@@ -25,31 +26,67 @@ export default function Page({
   params: { gameId: string };
 }) {
   const [open, setOpen] = useState<boolean>(false);
-  const { enemy } = useMatch();
-
+  const { enemy, resetMatch, matchId, matchInfo } = useMatch();
+  const { toast } = useToast();
+  const [resultOfMatch, setResultOfMatch] = useState<
+    "win" | "lose" | "in progress"
+  >("in progress");
+  const [{ title, description }, setMessage] = useState<{
+    title: string;
+    description: string;
+  }>({ title: "", description: "" });
   useEffect(() => {
-    socket.on("ongame-user-disconnect", () => {
+    resetMatch();
+    socket.on("user-disconnect", () => {
+      setMessage({
+        title: "YOU WIN!!!",
+        description: "Your opponent abbandoned the game",
+      });
+      setResultOfMatch("win");
       setOpen(true);
+    });
+    socket.on("match-loose", () => {
+      socket.emit("leave", matchId);
+      setMessage({
+        title: "GAME OVER!!!",
+        description: `Sorry but ${enemy?.username} is stronger than you`,
+      });
+      setResultOfMatch("lose");
+      setOpen(true);
+    });
+    socket.on("timeout", () => {
+      setResultOfMatch("win");
+      setMessage({
+        title: "YOU WIN!!!",
+        description: "Your opponent ran out of time",
+      });
+      socket.emit("leave", matchId);
     });
     return () => {
       socket.emit("ongame-user-disconnect", gameId);
       console.log("disconnect");
       //socket.emit('leave', gameId)
-      socket.off("ongame-user-disconnect");
+      socket.off("user-disconnect");
+      socket.off("match-loose");
     };
   }, []);
 
+  function handleDialog(newValue: boolean) {
+    if (!newValue) {
+      toast({ title: "Hai perso", description: "mi dispiace" });
+    }
+    setOpen(newValue);
+  }
+
   return (
-    <main>
-      <MyTable size={SIZE} />
-      <EnemyTable size={SIZE} />
-      <Dialog open={open} onOpenChange={setOpen}>
+    <main className="block">
+      <MyTable size={matchInfo?.size!} />
+      <EnemyTable size={matchInfo?.size!} />
+      <Dialog open={open} onOpenChange={handleDialog}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>You win!!!</DialogTitle>
-            <DialogDescription>
-              {enemy?.name} has been lost the connection
-            </DialogDescription>
+            <DialogTitle>{title}</DialogTitle>
+            <DialogDescription>{description}</DialogDescription>
           </DialogHeader>
           <DialogFooter>
             <DialogClose></DialogClose>
