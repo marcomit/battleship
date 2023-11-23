@@ -1,1 +1,4 @@
-type Keys = { publicKey: string; privateKey: string };
+interface Keys {
+  publicKey: string;
+  privateKey: string;
+}

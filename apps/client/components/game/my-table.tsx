@@ -1,12 +1,14 @@
 "use client";
 
 import { generateRandomTable } from "@/app/dashboard/game/[gameId]/logic";
-import { socket } from "@/lib/socket";
 import { alphabet, cn, formatNumberWithZero } from "@/lib/utils";
 import { useMatch } from "@/store/use-match";
-import { useEffect, useRef, useState } from "react";
+import { MouseEventHandler, useEffect, useRef, useState } from "react";
 import { Badge } from "../ui/badge";
 import UserAvatar from "../user-avatar";
+import { ScrollArea, ScrollBar } from "../ui/scroll-area";
+import { Separator } from "../ui/separator";
+import { useSocket } from "@/store/use-socket";
 
 export default function MyTable({ size }: { size: number }) {
   const table = useRef<HTMLTableElement>(null);
@@ -19,6 +21,7 @@ export default function MyTable({ size }: { size: number }) {
     myMoves,
     addMyMoves,
   } = useMatch();
+  const { socket } = useSocket();
   const [shipTable] = useState<number[][]>(generateRandomTable(size, true));
   const [seconds, setSeconds] = useState<number>(matchInfo?.totalTime! * 60);
   const [ship, setShip] = useState<number>(0);
@@ -39,7 +42,7 @@ export default function MyTable({ size }: { size: number }) {
     }
   };
   useEffect(() => {
-    socket.on(
+    socket!.on(
       "shotted",
       ({
         x,
@@ -55,7 +58,7 @@ export default function MyTable({ size }: { size: number }) {
         else setShip((prevShip) => prevShip + 1);
         const td = table.current?.querySelectorAll("tr td")[y * size + x];
         if (td) td.classList.replace("opacity-50", "opacity-100");
-        socket.emit(
+        socket!.emit(
           "send-shot-result",
           {
             x,
@@ -67,7 +70,7 @@ export default function MyTable({ size }: { size: number }) {
       }
     );
     return () => {
-      socket.off("shotted");
+      socket!.off("shotted");
     };
   }, []);
 
@@ -77,7 +80,39 @@ export default function MyTable({ size }: { size: number }) {
   }, [isMyTurn]);
 
   return (
-    <div className="lg:flex">
+    <div className="mt-6 space-x-2 float-left">
+      <div className="ml-4 space-y-2 w-[430px]">
+        <Separator />
+        <ScrollArea className="w-full flex whitespace-nowrap h-6 items-center">
+          <div className="flex w-max space-x-4">
+            {myMoves.map((shot, index) => (
+              <Badge
+                key={index}
+                className={"uppercase"}
+                variant={shot.result === "ship" ? "default" : "outline"}
+              >
+                {alphabet[shot.x]}-{shot.y + 1}
+              </Badge>
+            ))}
+          </div>
+          <ScrollBar orientation="horizontal" className="hidden" />
+        </ScrollArea>
+        <Separator />
+        <div className="flex items-center space-x-2 relative">
+          <UserAvatar user={enemy!} />
+          <div>
+            <p className="font-bold whitespace-pr">You!</p>
+            <Badge variant={"secondary"}>Ship: {matchInfo?.ship! - ship}</Badge>
+          </div>
+          <Badge
+            variant={"default"}
+            className="p-2 rounded absolute right-1 top-1/2 -translate-y-1/2"
+          >
+            {formatNumberWithZero(seconds / 60)} :{" "}
+            {formatNumberWithZero(seconds % 60)}
+          </Badge>
+        </div>
+      </div>
       <div className="flex">
         <div className="flex flex-col">
           <span className="w-8 h-8 border border-background flex items-center justify-center">
@@ -117,38 +152,16 @@ export default function MyTable({ size }: { size: number }) {
                 {row.map((cell, cellIndex) => (
                   <td
                     key={cellIndex}
-                    className={cn(cell === 1 ? "ship" : "water", "opacity-50")}
+                    className={cn(
+                      "w-10 h-10 border border-background opacity-50",
+                      cell === 1 ? "ship" : "water"
+                    )}
                   />
                 ))}
               </tr>
             ))}
           </tbody>
         </table>
-      </div>
-      <div className="ml-4 space-y-2 max-w-lg">
-        <div className="flex items-center space-x-2">
-          <UserAvatar user={enemy!} />
-          <div>
-            <p className="font-bold whitespace-pr">{enemy?.email}</p>
-            <Badge>Ship: {matchInfo?.ship! - ship}</Badge>
-          </div>
-        </div>
-        <Badge variant={"outline"}>
-          {formatNumberWithZero(seconds / 60)} :{" "}
-          {formatNumberWithZero(seconds % 60)}
-        </Badge>
-        <br />
-        {myMoves.map((shot, index) => (
-          <Badge
-            key={index}
-            className={"uppercase float-left"}
-            variant={shot.result === "ship" ? "default" : "outline"}
-          >
-            {alphabet[shot.x]}-{shot.y + 1}
-          </Badge>
-        ))}
-        <br />
-        <br />
       </div>
     </div>
   );

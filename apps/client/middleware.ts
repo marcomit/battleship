@@ -3,7 +3,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 export default withAuth(
-  async function middleware(req) {
+  async function middleware(req, e) {
     const pathname = req.nextUrl.pathname;
 
     // Manage route protection
@@ -18,7 +18,10 @@ export default withAuth(
       if (isAuth) return NextResponse.redirect(new URL("/dashboard", req.url));
       return NextResponse.next();
     }
-
+    if (isAccessingSensitiveRoute && isAuth) {
+      if (!isAuth.publicKey || isAuth.publicKey === "" || !isAuth.username)
+        return NextResponse.redirect(new URL("/change-username", req.url));
+    }
     if (!isAuth && isAccessingSensitiveRoute)
       return NextResponse.redirect(new URL("/login", req.url));
 
@@ -35,5 +38,5 @@ export default withAuth(
 );
 
 export const config = {
-  matchter: ["/", "/login", "/dashboard/:path*"],
+  matchter: ["/", "/login", "/change-username", "/dashboard/:path*"],
 };

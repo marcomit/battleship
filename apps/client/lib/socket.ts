@@ -3,7 +3,9 @@ declare global {
   var cachedSocket: Socket;
 }
 if (!global.cachedSocket) {
-  global.cachedSocket = io("http://localhost:2999");
+  global.cachedSocket = io("http://localhost:2999", {
+    auth: { token: "prova" },
+  });
 }
 let sock: Socket = global.cachedSocket;
 

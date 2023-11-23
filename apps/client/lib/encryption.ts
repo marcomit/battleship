@@ -31,3 +31,27 @@ export function decryptMessage(
   const decrypted = privateKey.decrypt(encryptedBytes);
   return forge.util.decodeUtf8(decrypted);
 }
+
+export function verifyKeyPair(keys: { privateKey: string; publicKey: string }) {
+  // Crea un messaggio da firmare
+  const message = "Hello, world!";
+
+  // Converti le chiavi PEM in oggetti chiave Node.js
+  const privateKey = forge.pki.privateKeyFromPem(keys.privateKey);
+  const publicKey = forge.pki.publicKeyFromPem(keys.publicKey);
+
+  // Firma il messaggio con la chiave privata
+  const signature = privateKey.sign(
+    forge.md.sha256.create(),
+    forge.util.encodeUtf8(message)
+  );
+
+  // Verifica la firma utilizzando la chiave pubblica
+  const isVerified = publicKey.verify(
+    forge.md.sha256.create(),
+    forge.util.encodeUtf8(message),
+    signature
+  );
+
+  return isVerified;
+}

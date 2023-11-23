@@ -1,17 +1,17 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
-import { socket } from "@/lib/socket";
 import { useRequest } from "@/store/use-request";
+import { useSocket } from "@/store/use-socket";
 import { FriendRequest, User } from "@prisma/client";
-import { useSession } from "next-auth/react";
 import { useEffect } from "react";
 
 export default function UserEvents() {
   const { addReceivedRequest } = useRequest();
   const { toast } = useToast();
+  const { socket } = useSocket();
   useEffect(() => {
-    socket.on(
+    socket!.on(
       `receive-friend-request`,
       (req: FriendRequest & { sender: User }) => {
         addReceivedRequest(req);
@@ -22,7 +22,7 @@ export default function UserEvents() {
       }
     );
     return () => {
-      socket.off(`receive-friend-request`);
+      socket!.off(`receive-friend-request`);
     };
   }, []);
   return null;

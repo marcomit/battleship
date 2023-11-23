@@ -1,8 +1,8 @@
 "use client";
 
 import { Skeleton } from "@/components/ui/skeleton";
-import { socket } from "@/lib/socket";
 import { useMatch } from "@/store/use-match";
+import { useSocket } from "@/store/use-socket";
 import { User } from "@prisma/client";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
@@ -12,38 +12,39 @@ export default function Page() {
   const { matchId, setMatchId, setEnemy, setIsMyTurn } = useMatch();
   const { data: session } = useSession();
   const router = useRouter();
+  const { socket } = useSocket();
 
   useEffect(() => {
     setIsMyTurn(false);
-    socket.emit("search-game", { user: session?.user!, otherGameId: matchId });
+    socket!.emit("search-game", { user: session?.user!, otherGameId: matchId });
 
-    socket.on(
+    socket!.on(
       "send-game-id",
       ({ user, otherGameId }: { user: User; otherGameId: string }) => {
-        socket.emit("join", otherGameId);
+        socket!.emit("join", otherGameId);
 
         setEnemy(user);
         setMatchId(otherGameId);
         setIsMyTurn(true);
-        socket.emit("send-enemy-info", { user: session?.user });
+        socket!.emit("send-enemy-info", { user: session?.user });
         router.push(`/dashboard/game/${otherGameId}`);
       }
     );
 
-    socket.on("receive-game-info", ({ user }: { user: User }) => {
+    socket!.on("receive-game-info", ({ user }: { user: User }) => {
       setEnemy(user);
-      socket.emit("join", matchId);
+      socket!.emit("join", matchId);
       router.push(`/dashboard/game/${matchId}`);
     });
 
     return () => {
-      socket.off("send-game-id");
-      socket.off("receive-game-info");
+      socket!.off("send-game-id");
+      socket!.off("receive-game-info");
     };
-  }, []);
+  }, [socket]);
 
   return (
-    <main>
+    <main className="space-y-2">
       <div className="flex items-center space-x-4">
         <Skeleton className="h-12 w-12 rounded-full" />
         <div className="space-y-2">
@@ -51,6 +52,7 @@ export default function Page() {
           <Skeleton className="h-4 w-[200px]" />
         </div>
       </div>
+      <Skeleton className="h-[250px] w-[250px]" />
     </main>
   );
 }

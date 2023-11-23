@@ -1,6 +1,5 @@
-import { env } from "@/env.mjs";
+import { User } from "@prisma/client";
 import { type ClassValue, clsx } from "clsx";
-import { Session } from "next-auth";
 import { getCsrfToken } from "next-auth/react";
 import { twMerge } from "tailwind-merge";
 
@@ -24,7 +23,7 @@ export function getInitialLetter(name: string): string {
     );
   return initialLetter;
 }
-export async function updateSession(newSession: Session) {
+export async function updateSession(userUpdated: Partial<User>) {
   await fetch("/api/auth/session", {
     method: "POST",
     headers: {
@@ -32,7 +31,7 @@ export async function updateSession(newSession: Session) {
     },
     body: JSON.stringify({
       csrfToken: await getCsrfToken(),
-      data: newSession,
+      data: { user: userUpdated },
     }),
   });
 }

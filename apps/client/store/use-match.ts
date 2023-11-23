@@ -32,7 +32,7 @@ export const useMatch = create<UseMatch>()(
     (set) => ({
       matchInfo: {
         timePerMove: 10,
-        totalTime: 1,
+        totalTime: 3,
         incrementOnMove: 2,
         size: 10,
         ship: 16,

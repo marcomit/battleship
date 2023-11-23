@@ -3,6 +3,8 @@ const server = http.createServer(require("express")());
 
 import { User } from "@prisma/client";
 import { Server } from "socket.io";
+import { db } from "../client/lib/prisma";
+import { verifyKeyPair } from "../client/lib/encryption";
 
 const io = new Server(server, {
   cors: {
@@ -10,11 +12,22 @@ const io = new Server(server, {
   },
 });
 
-io.on("connection", (socket) => {
-  io.on("join", (room: string) => {
-    console.log(room);
+/*io.use(async (socket, next) => {
+  const auth = socket.handshake.auth as {
+    publicKey: string;
+    privateKey: string;
+  };
+  const user = await db.user.findFirst({
+    where: { publicKey: auth.publicKey },
   });
 
+  if (!user) return next(new Error("Token not found"));
+  if (!verifyKeyPair(auth)) return next(new Error("Invalid keys provided"));
+
+  return next();
+});*/
+
+io.on("connection", (socket) => {
   socket.on("join", (room: string) => {
     socket.join(room);
   });

@@ -6,8 +6,6 @@ import { ModeProvider } from "@/providers/mode";
 import { cn } from "@/lib/utils";
 import ThemeWrapper from "@/components/theme/wrapper";
 import { Toaster } from "@/components/ui/toaster";
-import EncryptionProvider from "@/providers/encryption";
-import { Provider } from "jotai";
 import JotaiProvider from "@/providers/jotai";
 import { TooltipProvider } from "@/components/ui/tooltip";
 

@@ -38,7 +38,6 @@ export default function NavBar() {
                     onClick={(e) => {
                       setCurrentNavBar(index);
                       resetNotification(index);
-                      console.log(currentNavBar);
                     }}
                     className={cn(
                       buttonVariants({ variant: "ghost" }),

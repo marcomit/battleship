@@ -1,84 +1,74 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { buttonVariants } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardFooter,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Form,
-  FormControl,
-  FormDescription,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { zodResolver } from "@hookform/resolvers/zod";
+import { updateSession } from "@/lib/utils";
+import { useKeys } from "@/store/use-keys";
+import { User } from "@prisma/client";
+import axios from "axios";
 import { useSession } from "next-auth/react";
-import { useForm } from "react-hook-form";
-import { z } from "zod";
-
-const formSchema = z.object({
-  username: z.string().min(2, {
-    message: "Username must be at least 2 characters.",
-  }),
-  name: z.string(),
-  email: z.string().email(),
-});
+import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { useEffect, useState } from "react";
 
 export default function Page() {
   const { data: session } = useSession();
-  const form = useForm<z.infer<typeof formSchema>>({
-    resolver: zodResolver(formSchema),
-    defaultValues: {
-      username: session?.user.username!,
-    },
-  });
+  const router = useRouter();
+  const { privateKey, publicKey, generateKey } = useKeys();
+  const [username, setUsername] = useState<string>("");
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
-    console.log(values);
-  }
+  useEffect(() => {
+    generateKey();
+  }, []);
+
   return (
-    <main className="container flex items-center justify-center">
-      <Card>
+    <main className="flex w-screen h-screen">
+      <Card className="my-auto mx-auto">
         <CardHeader>
           <CardTitle>You can change your username</CardTitle>
         </CardHeader>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
-            <CardContent>
-              <FormField
-                control={form.control}
-                name="username"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Username</FormLabel>
-                    <FormControl>
-                      <Input
-                        placeholder="marco"
-                        defaultValue={session?.user.username!}
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormDescription>
-                      This is your public display name.
-                    </FormDescription>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-            <CardFooter>
-              <Button type="submit">Submit</Button>
-            </CardFooter>
-          </form>
-        </Form>
+        <CardContent>
+          <Input
+            placeholder="pippo@777"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+        </CardContent>
+        <CardFooter>
+          <Link
+            className={buttonVariants()}
+            href={"/dashboard"}
+            onClick={async (e) => {
+              try {
+                await generateKey();
+                console.log(JSON.stringify(session));
+                await axios
+                  .put("/api/user?redirect=true", {
+                    id: session?.user.id!,
+                    publicKey,
+                    username,
+                  } as Partial<User>)
+                  .then((res) => res.data);
+                await updateSession({
+                  ...session?.user,
+                  publicKey,
+                  username,
+                }).then(() => router.push("/dashboard"));
+              } catch (err) {
+                console.error(err);
+              }
+            }}
+          >
+            Submit
+          </Link>
+          {JSON.stringify(session?.user.username)}
+        </CardFooter>
       </Card>
     </main>
   );

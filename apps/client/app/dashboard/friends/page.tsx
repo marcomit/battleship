@@ -21,7 +21,6 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogPortal,
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
@@ -34,14 +33,12 @@ import { FriendRequest, User } from "@prisma/client";
 import UserAvatar from "@/components/user-avatar";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
-import { socket } from "@/lib/socket";
 import { Separator } from "@/components/ui/separator";
+import { useSocket } from "@/store/use-socket";
 
 export default function Page() {
   const { data: session } = useSession();
   const { requestReceived, requestSent } = useRequest();
-
-  useEffect(() => {}, []);
 
   useEffect(() => {
     async function loadFriend() {
@@ -97,6 +94,7 @@ function AlertDialogAddFriend() {
   const [users, setUsers] = useState<User[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { addSentRequest } = useRequest();
+  const { socket } = useSocket();
   return (
     <AlertDialog>
       <AlertDialogTrigger asChild>
@@ -155,7 +153,7 @@ function AlertDialogAddFriend() {
                   })
                   .then((res) => {
                     addSentRequest(res.data as FriendRequest);
-                    socket.emit("send-friend-request", selectedUser?.id);
+                    socket!.emit("send-friend-request", selectedUser?.id);
                   })
                   .catch((err) => console.log(err));
               }}
