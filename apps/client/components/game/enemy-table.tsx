@@ -9,7 +9,7 @@ import UserAvatar from "../user-avatar";
 import { useSession } from "next-auth/react";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import { useSocket } from "@/store/use-socket";
+import { socket } from "@/lib/socket";
 
 export default function EnemyTable({ size }: { size: number }) {
   const { data: session } = useSession();
@@ -27,14 +27,13 @@ export default function EnemyTable({ size }: { size: number }) {
   const [seconds, setSeconds] = useState<number>(matchInfo?.totalTime! * 60);
   const [ship, setShip] = useState<number>(0);
   const intervalIdRef = useRef<NodeJS.Timeout | null>(null);
-  const { socket } = useSocket();
 
   const startTimer = () => {
     if (!intervalIdRef.current) {
       intervalIdRef.current = setInterval(async () => {
         setSeconds((prevSeconds) => prevSeconds - 1);
         if (seconds < 0) {
-          socket!.emit("time-out");
+          socket.emit("time-out");
         }
       }, 1000);
     }
@@ -60,7 +59,7 @@ export default function EnemyTable({ size }: { size: number }) {
             td!.classList.add("ship");
           } else {
             td!.classList.add("water");
-            socket!.emit("shot", { x, y }, matchId);
+            socket.emit("shot", { x, y }, matchId);
           }
         }
       };
@@ -68,7 +67,7 @@ export default function EnemyTable({ size }: { size: number }) {
     [isMyTurn, enemyTable, table.current]
   );
   useEffect(() => {
-    socket!.on(
+    socket.on(
       "receive-shot-result",
       ({
         x,
@@ -84,7 +83,7 @@ export default function EnemyTable({ size }: { size: number }) {
         else
           setShip((prevShip) => {
             if (prevShip + 1 === matchInfo?.ship!)
-              socket!.emit("match-win", matchId);
+              socket.emit("match-win", matchId);
             return prevShip + 1;
           });
         const td = table.current?.querySelectorAll("tr td")[y * size + x];
@@ -92,7 +91,7 @@ export default function EnemyTable({ size }: { size: number }) {
       }
     );
     return () => {
-      socket!.off("receive-shot-result");
+      socket.off("receive-shot-result");
     };
   }, []);
 
@@ -123,7 +122,7 @@ export default function EnemyTable({ size }: { size: number }) {
         <div className="flex items-center space-x-2 relative">
           <UserAvatar user={session?.user!} />
           <div>
-            <p className="font-bold whitespace-pr">{enemy?.username}</p>
+            <p className="font-bold whitespace-pr">You</p>
             <Badge variant={"secondary"}>Ship: {matchInfo?.ship! - ship}</Badge>
           </div>
           <Badge

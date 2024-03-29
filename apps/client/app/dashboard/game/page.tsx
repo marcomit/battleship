@@ -1,5 +1,3 @@
-"use client";
-
 import { PlayIcon } from "@radix-ui/react-icons";
 import { buttonVariants } from "@/components/ui/button";
 import Link from "next/link";

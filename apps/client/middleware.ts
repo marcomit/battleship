@@ -3,7 +3,7 @@ import { withAuth } from "next-auth/middleware";
 import { NextResponse } from "next/server";
 
 export default withAuth(
-  async function middleware(req, e) {
+  async function middleware(req, _) {
     const pathname = req.nextUrl.pathname;
 
     // Manage route protection

@@ -1,14 +1,17 @@
 "use client";
 
-import { useKeys } from "@/store/use-keys";
-import { useSession } from "next-auth/react";
+import { socket } from "@/lib/socket";
 import { useEffect } from "react";
 
 export default function KeysProvider() {
-  const { data: session } = useSession();
-  const { privateKey, publicKey, setKeys } = useKeys();
   useEffect(() => {
-    if (!session) return;
-  }, [session, publicKey]);
+    socket.on("receive-keys", (keys: Keys) => {
+      console.log(keys);
+      window.localStorage.setItem("privateKey", keys.privateKey);
+    });
+    return () => {
+      socket.off("receive-keys");
+    };
+  }, []);
   return null;
 }

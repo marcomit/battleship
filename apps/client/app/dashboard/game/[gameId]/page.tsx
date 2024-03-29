@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/dialog";
 import { useMatch } from "@/store/use-match";
 import { useToast } from "@/components/ui/use-toast";
-import { useSocket } from "@/store/use-socket";
+import { socket } from "@/lib/socket";
 
 const SIZE = 10;
 
@@ -27,7 +27,6 @@ export default function Page({
   const [open, setOpen] = useState<boolean>(false);
   const { enemy, resetMatch, matchId, matchInfo } = useMatch();
   const { toast } = useToast();
-  const { socket } = useSocket();
   const [resultOfMatch, setResultOfMatch] = useState<
     "win" | "lose" | "in progress"
   >("in progress");
@@ -37,7 +36,7 @@ export default function Page({
   }>({ title: "", description: "" });
   useEffect(() => {
     resetMatch();
-    socket!.on("user-disconnect", () => {
+    socket.on("user-disconnect", () => {
       setMessage({
         title: "YOU WIN!!!",
         description: "Your opponent abbandoned the game",
@@ -45,8 +44,8 @@ export default function Page({
       setResultOfMatch("win");
       setOpen(true);
     });
-    socket!.on("match-loose", () => {
-      socket!.emit("leave", matchId);
+    socket.on("match-loose", () => {
+      socket.emit("leave", matchId);
       setMessage({
         title: "GAME OVER!!!",
         description: `Sorry but ${enemy?.username} is stronger than you`,
@@ -54,20 +53,20 @@ export default function Page({
       setResultOfMatch("lose");
       setOpen(true);
     });
-    socket!.on("timeout", () => {
+    socket.on("timeout", () => {
       setResultOfMatch("win");
       setMessage({
         title: "YOU WIN!!!",
         description: "Your opponent ran out of time",
       });
-      socket!.emit("leave", matchId);
+      socket.emit("leave", matchId);
     });
     return () => {
-      socket!.emit("ongame-user-disconnect", gameId);
+      // socket.emit("ongame-user-disconnect", gameId);
       console.log("disconnect");
-      //socket.emit('leave', gameId)
-      socket!.off("user-disconnect");
-      socket!.off("match-loose");
+      // socket.emit('leave', gameId)
+      socket.off("user-disconnect");
+      socket.off("match-loose");
     };
   }, []);
 

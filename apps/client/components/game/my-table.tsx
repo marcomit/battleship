@@ -3,12 +3,12 @@
 import { generateRandomTable } from "@/app/dashboard/game/[gameId]/logic";
 import { alphabet, cn, formatNumberWithZero } from "@/lib/utils";
 import { useMatch } from "@/store/use-match";
-import { MouseEventHandler, useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Badge } from "../ui/badge";
 import UserAvatar from "../user-avatar";
 import { ScrollArea, ScrollBar } from "../ui/scroll-area";
 import { Separator } from "../ui/separator";
-import { useSocket } from "@/store/use-socket";
+import { socket } from "@/lib/socket";
 
 export default function MyTable({ size }: { size: number }) {
   const table = useRef<HTMLTableElement>(null);
@@ -21,7 +21,6 @@ export default function MyTable({ size }: { size: number }) {
     myMoves,
     addMyMoves,
   } = useMatch();
-  const { socket } = useSocket();
   const [shipTable] = useState<number[][]>(generateRandomTable(size, true));
   const [seconds, setSeconds] = useState<number>(matchInfo?.totalTime! * 60);
   const [ship, setShip] = useState<number>(0);
@@ -42,7 +41,7 @@ export default function MyTable({ size }: { size: number }) {
     }
   };
   useEffect(() => {
-    socket!.on(
+    socket.on(
       "shotted",
       ({
         x,
@@ -58,7 +57,7 @@ export default function MyTable({ size }: { size: number }) {
         else setShip((prevShip) => prevShip + 1);
         const td = table.current?.querySelectorAll("tr td")[y * size + x];
         if (td) td.classList.replace("opacity-50", "opacity-100");
-        socket!.emit(
+        socket.emit(
           "send-shot-result",
           {
             x,
@@ -70,7 +69,7 @@ export default function MyTable({ size }: { size: number }) {
       }
     );
     return () => {
-      socket!.off("shotted");
+      socket.off("shotted");
     };
   }, []);
 
@@ -101,7 +100,7 @@ export default function MyTable({ size }: { size: number }) {
         <div className="flex items-center space-x-2 relative">
           <UserAvatar user={enemy!} />
           <div>
-            <p className="font-bold whitespace-pr">You!</p>
+            <p className="font-bold whitespace-pr">{enemy?.username}</p>
             <Badge variant={"secondary"}>Ship: {matchInfo?.ship! - ship}</Badge>
           </div>
           <Badge

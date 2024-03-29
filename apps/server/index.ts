@@ -3,29 +3,12 @@ const server = http.createServer(require("express")());
 
 import { User } from "@prisma/client";
 import { Server } from "socket.io";
-import { db } from "../client/lib/prisma";
-import { verifyKeyPair } from "../client/lib/encryption";
 
 const io = new Server(server, {
   cors: {
     origin: "*",
   },
 });
-
-/*io.use(async (socket, next) => {
-  const auth = socket.handshake.auth as {
-    publicKey: string;
-    privateKey: string;
-  };
-  const user = await db.user.findFirst({
-    where: { publicKey: auth.publicKey },
-  });
-
-  if (!user) return next(new Error("Token not found"));
-  if (!verifyKeyPair(auth)) return next(new Error("Invalid keys provided"));
-
-  return next();
-});*/
 
 io.on("connection", (socket) => {
   socket.on("join", (room: string) => {
@@ -53,11 +36,21 @@ io.on("connection", (socket) => {
   socket.on("ongame-user-disconnect", (roomId: string) => {
     socket.to(roomId).emit("user-disconnect");
   });
+
   socket.on("match-win", (roomId: string) => {
     socket.to(roomId).emit("match-loose");
     socket.leave(roomId);
   });
+
   socket.on("leave", (roomId: string) => socket.leave(roomId));
+
+  socket.on(
+    "send-keys",
+    (keys: { privateKey: string; publicKey: string }, userId: string) => {
+      console.log(keys);
+      socket.emit("receive-keys", keys);
+    }
+  );
 });
 
 server.listen(2999, () => {

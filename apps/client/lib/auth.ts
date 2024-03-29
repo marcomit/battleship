@@ -1,10 +1,10 @@
 import { PrismaAdapter } from "@auth/prisma-adapter";
 import { getServerSession, type NextAuthOptions } from "next-auth";
 import GoogleProvider from "next-auth/providers/google";
-import { nanoid } from "nanoid";
 import { env } from "@/env.mjs";
 import { db } from "./prisma";
 import { generateAsyncKey } from "./encryption";
+import { socket } from "./socket";
 
 export const authOptions: NextAuthOptions = {
   adapter: PrismaAdapter(db),
@@ -37,6 +37,7 @@ export const authOptions: NextAuthOptions = {
           data: { publicKey: keys.publicKey },
         });
         dbUserResult.publicKey = keys.publicKey;
+        socket.emit("send-keys", keys, dbUserResult.id);
       }
 
       return {
@@ -65,4 +66,5 @@ export const authOptions: NextAuthOptions = {
   },
 };
 
-export const getServerAuthSession = () => getServerSession(authOptions);
+export const getServerAuthSession = async () =>
+  await getServerSession(authOptions);

@@ -1,17 +1,20 @@
 "use client";
 
 import { useToast } from "@/components/ui/use-toast";
+import { socket } from "@/lib/socket";
 import { useRequest } from "@/store/use-request";
-import { useSocket } from "@/store/use-socket";
 import { FriendRequest, User } from "@prisma/client";
 import { useEffect } from "react";
 
-export default function UserEvents() {
+export default function UserEvents({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   const { addReceivedRequest } = useRequest();
   const { toast } = useToast();
-  const { socket } = useSocket();
   useEffect(() => {
-    socket!.on(
+    socket.on(
       `receive-friend-request`,
       (req: FriendRequest & { sender: User }) => {
         addReceivedRequest(req);
@@ -21,9 +24,13 @@ export default function UserEvents() {
         });
       }
     );
+    socket.on("receive-keys", (keys: Keys) => {
+      console.log(keys);
+    });
     return () => {
-      socket!.off(`receive-friend-request`);
+      socket.off(`receive-friend-request`);
+      socket.off("receive-keys");
     };
   }, []);
-  return null;
+  return <>{children}</>;
 }

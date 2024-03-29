@@ -1,54 +1,31 @@
-"use client";
-
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useSession } from "next-auth/react";
-import { useEffect, useState } from "react";
-import axios from "axios";
-import { Button, buttonVariants } from "@/components/ui/button";
-import { PlusIcon } from "@radix-ui/react-icons";
-import { useRequest } from "@/store/use-request";
 import {
   Card,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-  AlertDialogTrigger,
-} from "@/components/ui/alert-dialog";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { FriendRequest, User } from "@prisma/client";
-import UserAvatar from "@/components/user-avatar";
-import { Input } from "@/components/ui/input";
-import { cn } from "@/lib/utils";
-import { Separator } from "@/components/ui/separator";
-import { useSocket } from "@/store/use-socket";
+import { getServerAuthSession } from "@/lib/auth";
+import { db } from "@/lib/prisma";
+import { AlertDialogAddFriend } from "@/components/add-friend";
 
-export default function Page() {
-  const { data: session } = useSession();
-  const { requestReceived, requestSent } = useRequest();
-
-  useEffect(() => {
-    async function loadFriend() {
-      if (session) {
-        axios.get("/api/friends").then((res) => console.log(res.data));
-      }
-    }
-    loadFriend();
-  }, [session]);
-
+export default async function Page() {
+  const session = await getServerAuthSession();
+  const requestSent = await db.friendRequest.findMany({
+    where: { senderId: session?.user.id, status: "IN_PROGRESS" },
+    select: { receiver: true },
+  });
+  const receivedRequest = await db.friendRequest.findMany({
+    where: { receiverId: session?.user.id, status: "ACCEPTED" },
+    select: { sender: true },
+  });
+  const friends = await db.friendRequest.findMany({
+    where: {
+      status: "ACCEPTED",
+      OR: [{ senderId: session?.user.id }, { receiverId: session?.user.id }],
+    },
+    include: { sender: true, receiver: true },
+  });
   return (
     <main className="space-y-4">
       <AlertDialogAddFriend />
@@ -59,26 +36,37 @@ export default function Page() {
           <TabsTrigger value="sent">Sent</TabsTrigger>
         </TabsList>
         <TabsContent value="received">
-          {requestReceived.map(({ sender, receiver }) => {
+          {receivedRequest.map(({ sender }) => {
             return (
-              <Card key={sender?.id}>
+              <Card key={sender.id}>
                 <CardHeader>
-                  <CardTitle>{sender?.name}</CardTitle>
-                  <CardDescription>{sender?.email}</CardDescription>
+                  <CardTitle>{sender.name}</CardTitle>
+                  <CardDescription>{sender.email}</CardDescription>
                 </CardHeader>
               </Card>
             );
           })}
         </TabsContent>
-        <TabsContent value="friends"></TabsContent>
-        <TabsContent value="sent">
-          {requestSent.map(({ sender, status }) => {
+        <TabsContent value="friends">
+          {friends.map(({ receiver, sender }) => {
+            const friend = session?.user.id === receiver.id ? sender : receiver;
             return (
-              <Card key={sender?.id}>
+              <Card key={friend.id}>
                 <CardHeader>
-                  <CardTitle>{sender?.name}</CardTitle>
-                  <CardDescription>{sender?.email}</CardDescription>
-                  <p>{status}</p>
+                  <CardTitle>{friend.name}</CardTitle>
+                  <CardDescription>{friend.email}</CardDescription>
+                </CardHeader>
+              </Card>
+            );
+          })}
+        </TabsContent>
+        <TabsContent value="sent">
+          {requestSent.map(({ receiver }) => {
+            return (
+              <Card key={receiver.id}>
+                <CardHeader>
+                  <CardTitle>{receiver.name}</CardTitle>
+                  <CardDescription>{receiver.email}</CardDescription>
                 </CardHeader>
               </Card>
             );
@@ -86,83 +74,5 @@ export default function Page() {
         </TabsContent>
       </Tabs>
     </main>
-  );
-}
-
-function AlertDialogAddFriend() {
-  const { data: session } = useSession();
-  const [users, setUsers] = useState<User[]>([]);
-  const [selectedUser, setSelectedUser] = useState<User | null>(null);
-  const { addSentRequest } = useRequest();
-  const { socket } = useSocket();
-  return (
-    <AlertDialog>
-      <AlertDialogTrigger asChild>
-        <Button size={"icon"} variant={"outline"} className="rounded-full">
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <PlusIcon className="w-4 h-4" />
-            </TooltipTrigger>
-            <TooltipContent sideOffset={10}>Send request</TooltipContent>
-          </Tooltip>
-        </Button>
-      </AlertDialogTrigger>
-      <AlertDialogContent>
-        <AlertDialogHeader>
-          <AlertDialogTitle>Send a request</AlertDialogTitle>
-          <AlertDialogDescription>description...</AlertDialogDescription>
-        </AlertDialogHeader>
-        <Input
-          name="friendName"
-          onChange={async (e) =>
-            await axios
-              .get(`/api/friends/completion/${e.target.value}`)
-              .then((res) => setUsers(res.data as User[]))
-              .catch((err) => console.log(err))
-          }
-        />
-        {users.map((user) => (
-          <div
-            className={cn(
-              buttonVariants({
-                variant: selectedUser?.id === user.id ? "outline" : "ghost",
-              }),
-              "flex items-center justify-start space-x-2 py-6"
-            )}
-            key={user.id}
-            onClick={() => setSelectedUser(user)}
-          >
-            <UserAvatar user={user} />
-            <p>{user.username}</p>
-          </div>
-        ))}
-        <Separator />
-        <AlertDialogFooter className="flex items-center justify-between">
-          <div className="flex items-center space-x-2 mr-auto">
-            <UserAvatar user={selectedUser!} />
-            <p>{selectedUser?.username}</p>
-          </div>
-          <div className="flex space-x-2">
-            <AlertDialogCancel>Close</AlertDialogCancel>
-            <AlertDialogAction
-              onClick={async () => {
-                axios
-                  .post("/api/request/send", {
-                    senderId: session?.user.id,
-                    receiverId: selectedUser?.id,
-                  })
-                  .then((res) => {
-                    addSentRequest(res.data as FriendRequest);
-                    socket!.emit("send-friend-request", selectedUser?.id);
-                  })
-                  .catch((err) => console.log(err));
-              }}
-            >
-              Send request
-            </AlertDialogAction>
-          </div>
-        </AlertDialogFooter>
-      </AlertDialogContent>
-    </AlertDialog>
   );
 }
